@@ -17,7 +17,7 @@ def test_health():
 @patch('main.uuid.uuid4')
 def test_analyze(mock_uuid4, mock_elevenlabs, mock_gemini, mock_supabase):
     mock_uuid = MagicMock()
-    mock_uuid.hex = "abcdef1234567890"
+    mock_uuid.hex = "abcdef1234567890abcdef1234567890"
     mock_uuid4.return_value = mock_uuid
 
     # Mock implementations
@@ -63,6 +63,27 @@ def test_analyze_rejects_non_csv_file(filename, content_type):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Only CSV files are allowed."
+
+@patch('main.supabase_agent')
+@patch('main.gemini_agent')
+@patch('main.elevenlabs_agent')
+@patch('main.uuid.uuid4')
+def test_analyze_accepts_csv_extension_even_with_non_csv_content_type(
+    mock_uuid4, mock_elevenlabs, mock_gemini, mock_supabase
+):
+    mock_uuid = MagicMock()
+    mock_uuid.hex = "1234567890abcdef1234567890abcdef"
+    mock_uuid4.return_value = mock_uuid
+    mock_supabase.ingest_csv.return_value = "upload_12345678"
+    mock_supabase.get_table_summary.return_value = {"row_count": 1, "columns": ["col1"], "sample": [], "stats": {}}
+    mock_gemini.generate_insight.return_value = {"insight": "ok", "chart": None}
+    mock_elevenlabs.text_to_audio.return_value = b""
+
+    csv_file = io.BytesIO(b"col1\nval1\n")
+    response = client.post("/analyze", files={"file": ("test.csv", csv_file, "text/plain")})
+
+    assert response.status_code == 200
+    assert response.json()["table_name"] == "upload_12345678"
 
 @patch('main.supabase_agent')
 def test_analyze_returns_500_on_processing_error(mock_supabase):
