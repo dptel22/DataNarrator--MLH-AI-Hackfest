@@ -392,6 +392,25 @@
     <script>
         const BACKEND_URL = "http://localhost:8000";
 
+        function showError(message) {
+            let banner = document.getElementById('error-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'error-banner';
+                banner.style.cssText = 'background:#2d1a1a;border:1px solid #7a3030;color:#f08080;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;font-size:0.95rem;';
+                uploadSection.parentNode.insertBefore(banner, uploadSection);
+            }
+            banner.textContent = '⚠️ ' + message;
+            banner.style.display = 'block';
+            uploadSection.classList.remove('hidden');
+        }
+
+        function clearError() {
+            const banner = document.getElementById('error-banner');
+            if (banner) banner.style.display = 'none';
+        }
+
+
         // DOM Elements
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
@@ -487,26 +506,38 @@
                 
                 if (!response.ok) throw new Error("Analysis failed");
                 const data = await response.json();
-                
+
+                if (!data.insight || data.insight === "Unable to generate insight.") {
+                    showError("Gemini could not analyze this file. Try a different CSV or check back shortly.");
+                    stopLoading();
+                    return;
+                }
+
+                clearError();
                 currentInsight = data.insight;
                 insightText.textContent = currentInsight;
-                insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
-                insightAudio.load();
-                insightAudio.play().catch(()=>{});
+                insightText.classList.toggle('populated', Boolean(currentInsight));
+
+                if (data.audio_b64) {
+                    insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                    insightAudio.load();
+                    insightAudio.play().catch(()=>{});
+                }
 
                 rowCount.textContent = `${data.row_count || 0} Rows`;
                 colCount.textContent = `${data.columns ? data.columns.length : 0} Columns`;
 
-                if (data.chart_data) {
+                const cd = data.chart_data;
+                if (cd && cd.labels && cd.labels.length > 0 && cd.values && cd.values.length > 0) {
                     document.getElementById('chart-container').style.display = 'block';
                     if (window.chartInstance) window.chartInstance.destroy();
                     window.chartInstance = new Chart(document.getElementById('insight-chart'), {
-                        type: data.chart_data.type,
+                        type: cd.type,
                         data: {
-                            labels: data.chart_data.labels,
+                            labels: cd.labels,
                             datasets: [{
-                                label: data.chart_data.title,
-                                data: data.chart_data.values,
+                                label: cd.title,
+                                data: cd.values,
                                 backgroundColor: ['#4f98a3','#3b767f','#2d5c63','#1e4a50','#6ab8c4','#82cad4','#9bd8e0','#b0e4eb'],
                                 borderColor: '#4f98a3',
                                 borderWidth: 1
@@ -553,13 +584,17 @@
                 if (!response.ok) throw new Error("Follow-up failed");
                 const data = await response.json();
                 
-                followupAnswer.textContent = data.answer;
-                followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
-                followupAudio.load();
-                followupAudio.play().catch(()=>{});
-
+                followupAnswer.textContent = data.answer && data.answer.trim()
+                    ? data.answer
+                    : "Could not get an answer. Please try rephrasing your question.";
                 followupLoading.classList.add('hidden');
                 followupResult.classList.remove('hidden');
+
+                if (data.audio_b64 && data.answer && data.answer.trim()) {
+                    followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                    followupAudio.load();
+                    followupAudio.play().catch(() => {});
+                }
             } catch (error) {
                 console.error(error);
                 alert("Failed to get follow-up answer.");
