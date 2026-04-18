@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Narrator</title>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --accent: #4f98a3;
+            --accent-hover: #3b767f;
+            --text: #ffffff;
+            --text-muted: #a0a0a0;
+            --border: #333333;
+            --card-bg: #1a1a1a;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        .hidden { display: none !important; }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 3rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            background-color: var(--card-bg);
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-bottom: 1rem;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: rgba(79, 152, 163, 0.1);
+        }
+        .drop-zone p { color: var(--text-muted); margin: 0; }
+        #file-name {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            min-height: 1.2em;
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+        button:hover:not(:disabled) { background-color: var(--accent-hover); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .secondary-btn {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+        .secondary-btn:hover {
+            background-color: var(--card-bg);
+        }
+
+        /* Spinner */
+        #loading-section, #followup-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 0;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        .spinner-small {
+            width: 24px;
+            height: 24px;
+            border-width: 3px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-text { color: var(--text-muted); font-size: 1.1rem; text-align: center; }
+
+        /* Results */
+        #results-section {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        .metadata {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .chip {
+            background-color: var(--accent);
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        #insight-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+        audio {
+            width: 100%;
+            margin-bottom: 2rem;
+            outline: none;
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: #e0e0e0;
+        }
+
+        /* Follow-up */
+        .followup-section {
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+        .followup-section h3 { margin-top: 0; font-size: 1.1rem; }
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .input-group button { width: auto; padding: 0.8rem 1.5rem; }
+        #followup-answer {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 1rem; }
+            #results-section { padding: 1.5rem 1rem; }
+            .input-group { flex-direction: column; }
+            .input-group button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Narrator</h1>
+
+        <!-- Upload Section -->
+        <div id="upload-section">
+            <div id="drop-zone" class="drop-zone">
+                <p>Drop your CSV here or click to browse</p>
+                <input type="file" id="file-input" accept=".csv" hidden>
+            </div>
+            <p id="file-name"></p>
+            <button id="analyze-btn" disabled>Analyze</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-section" class="hidden">
+            <div class="spinner"></div>
+            <p id="loading-text">📊 Storing data in Supabase...</p>
+        </div>
+
+        <!-- Results Panel -->
+        <div id="results-section" class="hidden">
+            <div class="metadata">
+                <span class="chip" id="row-count"></span>
+                <span class="chip" id="col-count"></span>
+            </div>
+            <p id="insight-text"></p>
+            <audio id="insight-audio" controls></audio>
+            
+            <div class="followup-section">
+                <h3>Ask a follow-up</h3>
+                <div class="input-group">
+                    <input type="text" id="followup-input" placeholder="Type your question...">
+                    <button id="followup-btn">Submit</button>
+                </div>
+                
+                <div id="followup-loading" class="hidden">
+                    <div class="spinner spinner-small"></div>
+                    <p>Generating answer...</p>
+                </div>
+
+                <div id="followup-result" class="hidden">
+                    <p id="followup-answer"></p>
+                    <audio id="followup-audio" controls autoplay></audio>
+                </div>
+            </div>
+
+            <button id="reset-btn" class="secondary-btn">Analyze another file</button>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const uploadSection = document.getElementById('upload-section');
+        const loadingSection = document.getElementById('loading-section');
+        const loadingText = document.getElementById('loading-text');
+        const resultsSection = document.getElementById('results-section');
+        const rowCount = document.getElementById('row-count');
+        const colCount = document.getElementById('col-count');
+        const insightText = document.getElementById('insight-text');
+        const insightAudio = document.getElementById('insight-audio');
+        const followupInput = document.getElementById('followup-input');
+        const followupBtn = document.getElementById('followup-btn');
+        const followupLoading = document.getElementById('followup-loading');
+        const followupResult = document.getElementById('followup-result');
+        const followupAnswer = document.getElementById('followup-answer');
+        const followupAudio = document.getElementById('followup-audio');
+        const resetBtn = document.getElementById('reset-btn');
+
+        let selectedFile = null;
+        let currentInsight = "";
+        let loadingInterval;
+
+        const loadingMessages = [
+            "📊 Storing data in Supabase...",
+            "🤖 Generating insight with Gemini...",
+            "🎙️ Creating voice report with ElevenLabs..."
+        ];
+
+        // Drag & Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert("Please select a CSV file.");
+                return;
+            }
+            selectedFile = file;
+            fileNameDisplay.textContent = `Selected: ${file.name}`;
+            analyzeBtn.disabled = false;
+        }
+
+        // Loading states
+        function startLoading() {
+            uploadSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+            let msgIndex = 0;
+            loadingText.textContent = loadingMessages[0];
+            loadingInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.textContent = loadingMessages[msgIndex];
+            }, 3000);
+        }
+        function stopLoading() {
+            clearInterval(loadingInterval);
+            loadingSection.classList.add('hidden');
+        }
+
+        // Analyze
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            startLoading();
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                // Expected API contract
+                const response = await fetch(`${BACKEND_URL}/analyze`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error("Analysis failed");
+                const data = await response.json();
+                
+                currentInsight = data.insight;
+                insightText.textContent = currentInsight;
+                insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                rowCount.textContent = `${data.row_count || 0} Rows`;
+                colCount.textContent = `${data.col_count || 0} Columns`;
+                
+                stopLoading();
+                resultsSection.classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                alert("An error occurred during analysis.");
+                stopLoading();
+                uploadSection.classList.remove('hidden');
+            }
+        });
+
+        // Follow-up
+        followupBtn.addEventListener('click', async () => {
+            const question = followupInput.value.trim();
+            if (!question) return;
+
+            followupBtn.disabled = true;
+            followupResult.classList.add('hidden');
+            followupLoading.classList.remove('hidden');
+
+            try {
+                // Expected API contract
+                const response = await fetch(`${BACKEND_URL}/followup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ insight: currentInsight, question })
+                });
+                
+                if (!response.ok) throw new Error("Follow-up failed");
+                const data = await response.json();
+                
+                followupAnswer.textContent = data.answer;
+                followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                
+                followupLoading.classList.add('hidden');
+                followupResult.classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                alert("Failed to get follow-up answer.");
+                followupLoading.classList.add('hidden');
+            } finally {
+                followupBtn.disabled = false;
+            }
+        });
+
+        followupInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') followupBtn.click();
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileNameDisplay.textContent = "";
+            fileInput.value = "";
+            analyzeBtn.disabled = true;
+            followupInput.value = "";
+            followupResult.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            if (insightAudio) insightAudio.pause();
+            if (followupAudio) followupAudio.pause();
+        });
+    </script>
+</body>
+</html>
