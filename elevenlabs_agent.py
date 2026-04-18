@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
@@ -6,11 +7,16 @@ load_dotenv()
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+logger = logging.getLogger(__name__)
 
-client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
 
 def text_to_audio(text: str, prefix: str = "") -> bytes:
     full_text = f"{prefix} {text}".strip() if prefix else text
+
+    if client is None:
+        logger.warning("ELEVENLABS_API_KEY is missing; skipping audio generation.")
+        return b""
 
     try:
         audio_generator = client.text_to_speech.convert(

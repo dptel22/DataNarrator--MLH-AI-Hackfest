@@ -62,6 +62,12 @@ def generate_insight(table_summary: dict) -> dict:
                 "values": chart_data.get("values", []),
                 "title": chart_data.get("title", ""),
             }
+            if (
+                not chart_data["labels"]
+                or not chart_data["values"]
+                or all(value == 0 for value in chart_data["values"])
+            ):
+                chart_data = None
         else:
             chart_data = None
 
