@@ -14,6 +14,9 @@ if api_key:
 
 ERROR_INSIGHT = "Unable to generate insight."
 
+# gemini-2.5-flash: confirmed available and working on free tier
+GEMINI_MODEL = "gemini-2.5-flash"
+
 def generate_insight(table_summary: dict) -> dict:
     try:
         system_instruction = """You are a professional data narrator and analyst.
@@ -33,7 +36,7 @@ def generate_insight(table_summary: dict) -> dict:
         Values must be numbers only."""
 
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name=GEMINI_MODEL,
             system_instruction=system_instruction
         )
 
@@ -85,7 +88,7 @@ def answer_followup(insight: str, question: str) -> str:
     Answer a follow-up question based on the previous insight.
     """
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel(GEMINI_MODEL)
         prompt = (
             f"Based on the following data insight:\n"
             f"\"{insight}\"\n\n"
