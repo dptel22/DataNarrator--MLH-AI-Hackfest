@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -51,12 +52,21 @@ def generate_insight(table_summary: dict) -> dict:
 
         response = model.generate_content(prompt)
         raw = response.text.strip()
-        # Strip markdown code blocks if present
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        result = json.loads(raw)
+
+        # Extract JSON from a markdown code block if present (handles filler text before the block)
+        code_block = re.search(r"```(?:json)?\n?(.*?)\n?```", raw, re.DOTALL)
+        if code_block:
+            raw = code_block.group(1).strip()
+
+        try:
+            result = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            # Fallback: salvage the insight string via regex before giving up
+            insight_match = re.search(r'"insight"\s*:\s*"((?:[^"\\]|\\.)*)"', raw)
+            if insight_match:
+                print("[warn] gemini_agent: JSON parse failed; salvaged insight via regex")
+                return {"insight": insight_match.group(1), "chart_data": None}
+            raise  # triggers outer except → ERROR_INSIGHT
 
         chart_data = result.get("chart_data") or result.get("chart")
         if isinstance(chart_data, dict):
