@@ -93,4 +93,4 @@ async def followup(req: FollowupRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "DataNarrator"}

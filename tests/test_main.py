@@ -9,7 +9,7 @@ client = TestClient(app)
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json() == {"status": "ok", "service": "DataNarrator"}
 
 @patch('main.supabase_agent')
 @patch('main.gemini_agent')
@@ -19,7 +19,8 @@ def test_analyze(mock_elevenlabs, mock_gemini, mock_supabase):
     mock_supabase.ingest_csv.return_value = None
     mock_supabase.get_table_summary.return_value = {"summary": "test"}
 
-    mock_gemini.generate_insight.return_value = "Mocked insight"
+    mock_gemini.generate_insight.return_value = {"insight": "Mocked insight", "chart_data": None}
+    mock_gemini.ERROR_INSIGHT = "Unable to generate insight."
 
     mock_elevenlabs.text_to_audio.return_value = b"mocked_audio_bytes"
 
