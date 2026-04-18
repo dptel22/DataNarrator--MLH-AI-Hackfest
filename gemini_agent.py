@@ -33,7 +33,7 @@ def generate_insight(table_summary: dict) -> dict:
         Values must be numbers only."""
 
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.0-flash",
             system_instruction=system_instruction
         )
 
@@ -85,8 +85,7 @@ def answer_followup(insight: str, question: str) -> str:
     Answer a follow-up question based on the previous insight.
     """
     try:
-        # NOTE: gemini-2.0-flash quota is exhausted — keep gemini-1.5-flash here
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash")
         prompt = (
             f"Based on the following data insight:\n"
             f"\"{insight}\"\n\n"
