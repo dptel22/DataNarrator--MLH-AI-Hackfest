@@ -3,7 +3,10 @@ import base64
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import os
 
 import supabase_agent
 import gemini_agent
@@ -22,6 +25,10 @@ app.add_middleware(
 class FollowupRequest(BaseModel):
     insight: str
     question: str
+
+@app.get("/")
+async def root():
+    return FileResponse("index.html")
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
