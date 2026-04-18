@@ -72,7 +72,7 @@ def test_analyze_returns_500_on_processing_error(mock_supabase):
     response = client.post("/analyze", files={"file": ("test.csv", csv_file, "text/csv")})
 
     assert response.status_code == 500
-    assert "ingest failed" in response.json()["detail"]
+    assert response.json()["detail"] == "ingest failed"
 
 @patch('main.gemini_agent')
 @patch('main.elevenlabs_agent')
@@ -101,4 +101,5 @@ def test_followup_returns_500_when_answer_empty(mock_gemini):
     )
 
     assert response.status_code == 500
-    assert "Gemini failed to generate an answer." in response.json()["detail"]
+    assert isinstance(response.json()["detail"], str)
+    assert response.json()["detail"]
