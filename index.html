@@ -3,192 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Narrator</title>
+    <title>DataNarrator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #0f0f0f;
-            --accent: #4f98a3;
-            --accent-hover: #3b767f;
-            --text: #ffffff;
+            --bg-dark: #0a0a0f;
+            --bg-card: #13131a;
+            --bg-insight: #1a1a24;
+            --accent-teal: #4f98a3;
+            --text-main: #ffffff;
             --text-muted: #a0a0a0;
-            --border: #333333;
-            --card-bg: #1a1a1a;
+            --border-color: #2a2a35;
         }
+
         body {
-            background-color: var(--bg-color);
-            color: var(--text);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
         }
+
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
             padding: 2rem;
             box-sizing: border-box;
         }
-        h1 {
+
+        header {
             text-align: center;
             margin-bottom: 2rem;
-            font-weight: 600;
         }
-        .hidden { display: none !important; }
 
-        /* Drop Zone */
-        .drop-zone {
-            border: 2px dashed var(--accent);
-            border-radius: 12px;
-            padding: 3rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            background-color: var(--card-bg);
-            transition: background-color 0.2s, border-color 0.2s;
-            margin-bottom: 1rem;
+        .logo-svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            display: block;
         }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* Upload Section */
+        #upload-section {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: rgba(26, 26, 36, 0.5);
+        }
+
         .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent-teal);
             background-color: rgba(79, 152, 163, 0.1);
         }
-        .drop-zone p { color: var(--text-muted); margin: 0; }
-        #file-name {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--accent);
-            margin-bottom: 1rem;
-            min-height: 1.2em;
+
+        .drop-zone p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-muted);
         }
 
-        /* Buttons */
+        #file-name {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: var(--accent-teal);
+            min-height: 1.5rem;
+        }
+
         button {
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--accent);
-            color: #fff;
+            background-color: var(--accent-teal);
+            color: white;
             border: none;
+            padding: 1rem 2rem;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
-        }
-        button:hover:not(:disabled) { background-color: var(--accent-hover); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .secondary-btn {
-            background-color: transparent;
-            border: 1px solid var(--border);
-            margin-top: 2rem;
-        }
-        .secondary-btn:hover {
-            background-color: var(--card-bg);
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+            font-family: 'Inter', sans-serif;
         }
 
-        /* Spinner */
-        #loading-section, #followup-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 0;
+        button:hover:not(:disabled) {
+            background-color: #3b767f;
         }
+
+        button:disabled {
+            background-color: #2a2a35;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        button.secondary-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        button.secondary-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Loading State */
+        #loading-section {
+            text-align: center;
+            padding: 4rem 0;
+        }
+
         .spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top-color: var(--accent);
+            border: 3px solid rgba(79, 152, 163, 0.3);
             border-radius: 50%;
+            border-top-color: var(--accent-teal);
             animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
+            margin: 0 auto 1.5rem;
         }
+
         .spinner-small {
             width: 24px;
             height: 24px;
-            border-width: 3px;
+            border-width: 2px;
+            margin: 0 1rem 0 0;
+            display: inline-block;
+            vertical-align: middle;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        #loading-text { color: var(--text-muted); font-size: 1.1rem; text-align: center; }
 
-        /* Results */
-        #results-section {
-            background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
+
+        #loading-text {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Results Panel */
+        #results-section {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
         .metadata {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
         }
+
         .chip {
-            background-color: var(--accent);
-            color: #fff;
-            padding: 0.3rem 0.8rem;
-            border-radius: 16px;
+            background-color: rgba(79, 152, 163, 0.15);
+            color: var(--accent-teal);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 500;
         }
-        #insight-text {
-            font-size: 1.3rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            color: #ffffff;
+
+        .insight-box {
+            background-color: var(--bg-insight);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 3px solid var(--accent-teal);
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin: 0;
         }
+
+        .audio-container {
+            margin-top: 0.5rem;
+        }
+
+        .audio-label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
         audio {
             width: 100%;
-            margin-bottom: 2rem;
+            height: 40px;
+            border-radius: 8px;
             outline: none;
         }
+
         audio::-webkit-media-controls-panel {
-            background-color: #e0e0e0;
+            background-color: #2a2a35;
+        }
+
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            color: #ffffff;
+        }
+
+        #chart-container {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Tech Stack Badges */
+        .tech-stack-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            margin-top: 1rem;
         }
 
         /* Follow-up */
         .followup-section {
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--border-color);
             padding-top: 1.5rem;
         }
-        .followup-section h3 { margin-top: 0; font-size: 1.1rem; }
+
+        .followup-section h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
         .input-group {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1rem;
         }
+
         .input-group input {
             flex: 1;
             padding: 0.8rem 1rem;
             border-radius: 8px;
-            border: 1px solid var(--border);
-            background-color: var(--bg-color);
-            color: var(--text);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             font-size: 1rem;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        .input-group button { width: auto; padding: 0.8rem 1.5rem; }
-        #followup-answer {
-            background-color: var(--bg-color);
-            padding: 1rem;
-            border-radius: 8px;
-            line-height: 1.5;
-            margin-bottom: 1rem;
+            font-family: 'Inter', sans-serif;
         }
 
-        @media (max-width: 480px) {
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+        }
+
+        .input-group button {
+            margin-top: 0;
+            width: auto;
+        }
+
+        #followup-loading {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+        }
+
+        #followup-result {
+            margin-top: 1.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
             .container { padding: 1rem; }
             #results-section { padding: 1.5rem 1rem; }
             .input-group { flex-direction: column; }
             .input-group button { width: 100%; }
+            .drop-zone { padding: 3rem 1rem; }
+            h1 { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Data Narrator</h1>
+        <header>
+            <svg class="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="16" fill="rgba(79, 152, 163, 0.1)"/>
+                <path d="M20 32L20 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
+                <path d="M28 20L28 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
+                <path d="M36 28L36 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
+                <path d="M44 36L44 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <h1>DataNarrator</h1>
+            <p class="subtitle">Turn any CSV into an AI voice briefing — powered by Gemini & ElevenLabs</p>
+        </header>
 
         <!-- Upload Section -->
         <div id="upload-section">
@@ -203,7 +337,7 @@
         <!-- Loading State -->
         <div id="loading-section" class="hidden">
             <div class="spinner"></div>
-            <p id="loading-text">📊 Storing data in Supabase...</p>
+            <p id="loading-text">📊 Storing in Supabase...</p>
         </div>
 
         <!-- Results Panel -->
@@ -212,11 +346,27 @@
                 <span class="chip" id="row-count"></span>
                 <span class="chip" id="col-count"></span>
             </div>
-            <p id="insight-text"></p>
-            <audio id="insight-audio" controls></audio>
             
+            <p id="insight-text" class="insight-box"></p>
+
+            <div class="audio-container">
+                <span class="audio-label">🎙️ AI Voice Briefing</span>
+                <audio id="insight-audio" controls></audio>
+            </div>
+
+            <div id="chart-container" style="display:none;">
+                <p class="audio-label">📊 Auto-Generated Chart</p>
+                <canvas id="insight-chart" style="max-height:280px;"></canvas>
+            </div>
+
+            <div class="tech-stack-row">
+                <span class="chip">Gemini 1.5 Flash</span>
+                <span class="chip">ElevenLabs Turbo v2</span>
+                <span class="chip">Supabase</span>
+            </div>
+
             <div class="followup-section">
-                <h3>Ask a follow-up</h3>
+                <h3>Ask a follow-up question</h3>
                 <div class="input-group">
                     <input type="text" id="followup-input" placeholder="Type your question...">
                     <button id="followup-btn">Submit</button>
@@ -228,8 +378,10 @@
                 </div>
 
                 <div id="followup-result" class="hidden">
-                    <p id="followup-answer"></p>
-                    <audio id="followup-audio" controls autoplay></audio>
+                    <p id="followup-answer" class="insight-box" style="font-size: 1rem; padding: 1rem; margin-bottom: 1rem;"></p>
+                    <div class="audio-container">
+                        <audio id="followup-audio" controls autoplay></audio>
+                    </div>
                 </div>
             </div>
 
@@ -266,9 +418,9 @@
         let loadingInterval;
 
         const loadingMessages = [
-            "📊 Storing data in Supabase...",
-            "🤖 Generating insight with Gemini...",
-            "🎙️ Creating voice report with ElevenLabs..."
+            "📊 Storing in Supabase...",
+            "🤖 Gemini analyzing...",
+            "🎙️ Generating voice with ElevenLabs..."
         ];
 
         // Drag & Drop
@@ -339,8 +491,37 @@
                 currentInsight = data.insight;
                 insightText.textContent = currentInsight;
                 insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                insightAudio.load();
+                insightAudio.play().catch(()=>{});
+
                 rowCount.textContent = `${data.row_count || 0} Rows`;
-                colCount.textContent = `${data.col_count || 0} Columns`;
+                colCount.textContent = `${data.columns ? data.columns.length : 0} Columns`;
+
+                if (data.chart_data) {
+                    document.getElementById('chart-container').style.display = 'block';
+                    if (window.chartInstance) window.chartInstance.destroy();
+                    window.chartInstance = new Chart(document.getElementById('insight-chart'), {
+                        type: data.chart_data.type,
+                        data: {
+                            labels: data.chart_data.labels,
+                            datasets: [{
+                                label: data.chart_data.title,
+                                data: data.chart_data.values,
+                                backgroundColor: ['#4f98a3','#3b767f','#2d5c63','#1e4a50','#6ab8c4','#82cad4','#9bd8e0','#b0e4eb'],
+                                borderColor: '#4f98a3',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { labels: { color: '#ffffff', font: { family: 'Inter' } } } },
+                            scales: {
+                                x: { ticks: { color: '#a0a0a0' }, grid: { color: '#222' } },
+                                y: { ticks: { color: '#a0a0a0' }, grid: { color: '#222' } }
+                            }
+                        }
+                    });
+                }
                 
                 stopLoading();
                 resultsSection.classList.remove('hidden');
@@ -374,6 +555,8 @@
                 
                 followupAnswer.textContent = data.answer;
                 followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                followupAudio.load();
+                followupAudio.play().catch(()=>{});
                 
                 followupLoading.classList.add('hidden');
                 followupResult.classList.remove('hidden');
@@ -400,6 +583,13 @@
             followupResult.classList.add('hidden');
             resultsSection.classList.add('hidden');
             uploadSection.classList.remove('hidden');
+
+            document.getElementById('chart-container').style.display = 'none';
+            if (window.chartInstance) {
+                window.chartInstance.destroy();
+                window.chartInstance = null;
+            }
+
             if (insightAudio) insightAudio.pause();
             if (followupAudio) followupAudio.pause();
         });
