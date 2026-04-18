@@ -18,7 +18,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -42,24 +42,21 @@ async def analyze(file: UploadFile = File(...)):
         if len(contents) > 10 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
 
-        df = pd.read_csv(io.BytesIO(contents))
+        try:
+            df = pd.read_csv(io.BytesIO(contents))
+        except (pd.errors.EmptyDataError, pd.errors.ParserError) as csv_err:
+            raise HTTPException(status_code=400, detail="Invalid CSV file format.")
 
         if df.empty or len(df.columns) == 0:
             raise HTTPException(status_code=400, detail="CSV file is empty or has no columns.")
 
         session_id = "upload_" + uuid.uuid4().hex[:8]
 
-        # Supabase logging is optional — never let it kill the analyze flow
-        try:
-            supabase_agent.ingest_csv(df, session_id)
-        except Exception as sb_err:
-            print(f"[warn] Supabase ingest skipped: {sb_err}")
-
         summary = supabase_agent.get_table_summary(df)
 
         gemini_result = gemini_agent.generate_insight(summary)
         insight_text = gemini_result.get("insight", "")
-        chart_data = gemini_result.get("chart_data") or gemini_result.get("chart")
+        chart_data = gemini_result.get("chart_data")
 
         is_error_insight = (insight_text == gemini_agent.ERROR_INSIGHT or not insight_text)
         if is_error_insight:
