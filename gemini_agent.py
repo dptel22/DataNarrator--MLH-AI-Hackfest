@@ -1,4 +1,6 @@
+import json
 import os
+
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -17,15 +19,15 @@ def generate_insight(table_summary: dict) -> dict:
         Return this exact structure:
         {
           "insight": "3 sentence spoken briefing ending with one actionable recommendation",
-          "chart": {
+          "chart_data": {
             "type": "bar",
-            "title": "descriptive chart title",
             "labels": ["label1", "label2", "label3"],
-            "values": [10, 20, 30]
+            "values": [10, 20, 30],
+            "title": "descriptive chart title"
           }
         }
         For chart type: use "bar" for comparisons/counts, "pie" for distributions/percentages.
-        Labels: pick the most meaningful column. Max 8 labels. If data has no good chart, still return a chart using top value counts.
+        Labels: pick the most meaningful column. Max 8 labels. If data has no good chart, still return chart_data using top value counts.
         Values must be numbers only."""
         
         model = genai.GenerativeModel(
@@ -48,12 +50,26 @@ def generate_insight(table_summary: dict) -> dict:
             raw = raw.split("```")[1]
             if raw.startswith("json"):
                 raw = raw[4:]
-        import json
         result = json.loads(raw)
-        return result
+
+        chart_data = result.get("chart_data") or result.get("chart")
+        if isinstance(chart_data, dict):
+            chart_data = {
+                "type": chart_data.get("type", "bar"),
+                "labels": chart_data.get("labels", []),
+                "values": chart_data.get("values", []),
+                "title": chart_data.get("title", ""),
+            }
+        else:
+            chart_data = None
+
+        return {
+            "insight": result.get("insight", ""),
+            "chart_data": chart_data,
+        }
     except Exception as e:
         print(f"Error generating insight: {e}")
-        return {"insight": "Unable to generate insight.", "chart": None}
+        return {"insight": "Unable to generate insight.", "chart_data": None}
 
 def answer_followup(insight: str, question: str) -> str:
     """

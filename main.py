@@ -37,7 +37,7 @@ async def analyze(file: UploadFile = File(...)):
 
         gemini_result = gemini_agent.generate_insight(summary)
         insight_text = gemini_result.get("insight", "")
-        chart_data = gemini_result.get("chart", None)
+        chart_data = gemini_result.get("chart_data") or gemini_result.get("chart")
         audio_bytes = elevenlabs_agent.text_to_audio(insight_text)
         audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
 
