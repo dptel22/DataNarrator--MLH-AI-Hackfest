@@ -462,13 +462,23 @@
             }
         });
 
+        function formatBytes(bytes) {
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
         function handleFileSelect(file) {
             if (!file.name.endsWith('.csv')) {
-                alert("Please select a CSV file.");
+                showError('Please upload a CSV file (.csv)');
                 return;
             }
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File too large. Maximum size is 10MB.');
+                return;
+            }
+            clearError();
             selectedFile = file;
-            fileNameDisplay.textContent = `Selected: ${file.name}`;
+            fileNameDisplay.textContent = `Selected: ${file.name} (${formatBytes(file.size)})`;
             analyzeBtn.disabled = false;
         }
 
@@ -492,6 +502,14 @@
         // Analyze
         analyzeBtn.addEventListener('click', async () => {
             if (!selectedFile) return;
+            if (!selectedFile.name.endsWith('.csv')) {
+                showError('Please upload a CSV file (.csv)');
+                return;
+            }
+            if (selectedFile.size > 10 * 1024 * 1024) {
+                showError('File too large. Maximum size is 10MB.');
+                return;
+            }
             startLoading();
             
             const formData = new FormData();
@@ -519,9 +537,12 @@
                 insightText.classList.toggle('populated', Boolean(currentInsight));
 
                 if (data.audio_b64) {
+                    insightAudio.style.display = '';
                     insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
                     insightAudio.load();
                     insightAudio.play().catch(()=>{});
+                } else {
+                    insightAudio.style.display = 'none';
                 }
 
                 rowCount.textContent = `${data.row_count || 0} Rows`;
@@ -591,9 +612,12 @@
                 followupResult.classList.remove('hidden');
 
                 if (data.audio_b64 && data.answer && data.answer.trim()) {
+                    followupAudio.style.display = '';
                     followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
                     followupAudio.load();
                     followupAudio.play().catch(() => {});
+                } else {
+                    followupAudio.style.display = 'none';
                 }
             } catch (error) {
                 console.error(error);
