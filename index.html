@@ -349,9 +349,9 @@
             
             <p id="insight-text" class="insight-box"></p>
 
-            <div class="audio-container">
+            <div id="insight-audio-container" class="audio-container" style="display:none;">
                 <span class="audio-label">🎙️ AI Voice Briefing</span>
-                <audio id="insight-audio" controls></audio>
+                <audio id="insight-audio" controls style="display:block; width:100%;"></audio>
             </div>
 
             <div id="chart-container" style="display:none;">
@@ -360,8 +360,8 @@
             </div>
 
             <div class="tech-stack-row">
-                <span class="chip">Gemini 1.5 Flash</span>
-                <span class="chip">ElevenLabs Turbo v2</span>
+                <span class="chip">Gemini 2.5 Flash</span>
+                <span class="chip">Google Cloud TTS</span>
                 <span class="chip">Supabase</span>
             </div>
 
@@ -380,7 +380,7 @@
                 <div id="followup-result" class="hidden">
                     <p id="followup-answer" class="insight-box" style="font-size: 1rem; padding: 1rem; margin-bottom: 1rem;"></p>
                     <div class="audio-container">
-                        <audio id="followup-audio" controls autoplay></audio>
+                        <audio id="followup-audio" controls autoplay style="display:none;"></audio>
                     </div>
                 </div>
             </div>
@@ -536,22 +536,24 @@
                 insightText.textContent = currentInsight;
                 insightText.classList.toggle('populated', Boolean(currentInsight));
 
+                const insightAudioContainer = document.getElementById('insight-audio-container');
                 if (data.audio_b64) {
-                    insightAudio.style.display = '';
+                    insightAudioContainer.style.display = '';
                     insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
                     insightAudio.load();
                     insightAudio.play().catch(()=>{});
                 } else {
-                    insightAudio.style.display = 'none';
+                    insightAudioContainer.style.display = 'none';
                 }
 
                 rowCount.textContent = `${data.row_count || 0} Rows`;
                 colCount.textContent = `${data.columns ? data.columns.length : 0} Columns`;
 
                 const cd = data.chart_data;
+                document.getElementById('chart-container').style.display = 'none';
+                if (window.chartInstance) { window.chartInstance.destroy(); window.chartInstance = null; }
                 if (cd && cd.labels && cd.labels.length > 0 && cd.values && cd.values.length > 0) {
                     document.getElementById('chart-container').style.display = 'block';
-                    if (window.chartInstance) window.chartInstance.destroy();
                     window.chartInstance = new Chart(document.getElementById('insight-chart'), {
                         type: cd.type,
                         data: {
@@ -579,7 +581,7 @@
                 resultsSection.classList.remove('hidden');
             } catch (error) {
                 console.error(error);
-                alert("An error occurred during analysis.");
+                showError("Something went wrong during analysis. Please try again.");
                 stopLoading();
                 uploadSection.classList.remove('hidden');
             }
@@ -621,7 +623,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert("Failed to get follow-up answer.");
+                showError("Something went wrong. Please try again.");
                 followupLoading.classList.add('hidden');
             } finally {
                 followupBtn.disabled = false;
@@ -649,8 +651,9 @@
                 window.chartInstance = null;
             }
 
+            document.getElementById('insight-audio-container').style.display = 'none';
             if (insightAudio) insightAudio.pause();
-            if (followupAudio) followupAudio.pause();
+            if (followupAudio) { followupAudio.pause(); followupAudio.style.display = 'none'; }
         });
     </script>
 </body>
