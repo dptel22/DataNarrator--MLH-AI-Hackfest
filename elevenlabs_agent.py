@@ -6,7 +6,9 @@ from elevenlabs.client import ElevenLabs
 load_dotenv()
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+# Sarah (EXAVITQu4vr4xnSDxMaL) — free premade voice, confirmed working on free tier API
+# Rachel (21m00Tcm4TlvDq8ikWAM) is a library voice, requires paid plan via API
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")
 logger = logging.getLogger(__name__)
 
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
@@ -25,7 +27,7 @@ def text_to_audio(text: str, prefix: str = "") -> bytes:
             text=full_text,
             model_id="eleven_turbo_v2",
         )
-        
+
         audio_bytes = b"".join([chunk for chunk in audio_generator])
         return audio_bytes
     except Exception as e:
