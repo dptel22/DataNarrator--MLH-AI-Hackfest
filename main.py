@@ -3,7 +3,10 @@ import base64
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import os
 
 import supabase_agent
 import gemini_agent
@@ -23,6 +26,10 @@ class FollowupRequest(BaseModel):
     insight: str
     question: str
 
+@app.get("/")
+async def root():
+    return FileResponse("index.html")
+
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
@@ -32,15 +39,30 @@ async def analyze(file: UploadFile = File(...)):
         df = pd.read_csv(file.file)
         table_name = "upload_" + uuid.uuid4().hex[:8]
 
-        supabase_agent.ingest_csv(df, table_name)
+        # Supabase logging is optional — never let it kill the analyze flow
+        try:
+            supabase_agent.ingest_csv(df, table_name)
+        except Exception as sb_err:
+            print(f"[warn] Supabase ingest skipped: {sb_err}")
+
         summary = supabase_agent.get_table_summary(df)
 
-        insight_text = gemini_agent.generate_insight(summary)
-        audio_bytes = elevenlabs_agent.text_to_audio(insight_text)
-        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
+        gemini_result = gemini_agent.generate_insight(summary)
+        insight_text = gemini_result.get("insight", "")
+        chart_data = gemini_result.get("chart_data") or gemini_result.get("chart")
+
+        # Do NOT TTS the generic error string — return empty audio so frontend
+        # shows the text without attempting to play silence as insight.
+        is_error_insight = (insight_text == gemini_agent.ERROR_INSIGHT or not insight_text)
+        if is_error_insight:
+            audio_b64 = ""
+        else:
+            audio_bytes = elevenlabs_agent.text_to_audio(insight_text)
+            audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
 
         return {
             "insight": insight_text,
+            "chart_data": chart_data,
             "audio_b64": audio_b64,
             "table_name": table_name,
             "row_count": len(df),
@@ -53,7 +75,13 @@ async def analyze(file: UploadFile = File(...)):
 async def followup(req: FollowupRequest):
     try:
         answer = gemini_agent.answer_followup(req.insight, req.question)
-        audio_bytes = elevenlabs_agent.text_to_audio(answer)
+        if not answer:
+            raise HTTPException(status_code=500, detail="Gemini failed to generate an answer.")
+
+        audio_bytes = elevenlabs_agent.text_to_audio(
+            answer,
+            prefix=f"You asked: {req.question}. Here's what I found:"
+        )
         audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
 
         return {

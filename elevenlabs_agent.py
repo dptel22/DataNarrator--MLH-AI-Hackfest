@@ -9,12 +9,14 @@ ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-def text_to_audio(text: str) -> bytes:
+def text_to_audio(text: str, prefix: str = "") -> bytes:
+    full_text = f"{prefix} {text}".strip() if prefix else text
+
     try:
         audio_generator = client.text_to_speech.convert(
             voice_id=ELEVENLABS_VOICE_ID,
             output_format="mp3_44100_128",
-            text=text,
+            text=full_text,
             model_id="eleven_turbo_v2",
         )
         
