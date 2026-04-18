@@ -35,12 +35,15 @@ async def analyze(file: UploadFile = File(...)):
         supabase_agent.ingest_csv(df, table_name)
         summary = supabase_agent.get_table_summary(df)
 
-        insight_text = gemini_agent.generate_insight(summary)
+        gemini_result = gemini_agent.generate_insight(summary)
+        insight_text = gemini_result.get("insight", "")
+        chart_data = gemini_result.get("chart", None)
         audio_bytes = elevenlabs_agent.text_to_audio(insight_text)
         audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
 
         return {
             "insight": insight_text,
+            "chart_data": chart_data,
             "audio_b64": audio_b64,
             "table_name": table_name,
             "row_count": len(df),
@@ -53,7 +56,13 @@ async def analyze(file: UploadFile = File(...)):
 async def followup(req: FollowupRequest):
     try:
         answer = gemini_agent.answer_followup(req.insight, req.question)
-        audio_bytes = elevenlabs_agent.text_to_audio(answer)
+        if not answer:
+            raise HTTPException(status_code=500, detail="Gemini failed to generate an answer.")
+
+        audio_bytes = elevenlabs_agent.text_to_audio(
+            answer,
+            prefix=f"You asked: {req.question}. Here's what I found:"
+        )
         audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else ""
 
         return {

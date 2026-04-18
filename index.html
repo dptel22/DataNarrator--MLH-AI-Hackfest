@@ -205,6 +205,10 @@
             margin: 0;
         }
 
+        .insight-box.populated {
+            box-shadow: 0 0 0 1px rgba(79, 152, 163, 0.3);
+        }
+
         .audio-container {
             margin-top: 0.5rem;
         }
@@ -490,6 +494,7 @@
                 
                 currentInsight = data.insight;
                 insightText.textContent = currentInsight;
+                insightText.classList.toggle('populated', Boolean(currentInsight));
                 insightAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
                 insightAudio.load();
                 insightAudio.play().catch(()=>{});
@@ -554,12 +559,11 @@
                 const data = await response.json();
                 
                 followupAnswer.textContent = data.answer;
-                followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
-                followupAudio.load();
-                followupAudio.play().catch(()=>{});
-                
                 followupLoading.classList.add('hidden');
                 followupResult.classList.remove('hidden');
+                followupAudio.src = `data:audio/mp3;base64,${data.audio_b64}`;
+                followupAudio.load();
+                followupAudio.play().catch(() => {});
             } catch (error) {
                 console.error(error);
                 alert("Failed to get follow-up answer.");
@@ -590,6 +594,8 @@
                 window.chartInstance = null;
             }
 
+            insightText.textContent = "";
+            insightText.classList.remove('populated');
             if (insightAudio) insightAudio.pause();
             if (followupAudio) followupAudio.pause();
         });
