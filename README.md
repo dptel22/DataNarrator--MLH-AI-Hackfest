@@ -1,6 +1,6 @@
 # DataNarrator — MLH AI Hackfest
 
-> **Query your Supabase data warehouse, generate a natural-language narrative with Google Gemini, and listen to it via ElevenLabs text-to-speech — all from a clean browser UI.**
+> **Query your Snowflake data warehouse, generate a natural-language narrative with Google Gemini, and listen to it via ElevenLabs text-to-speech — all from a clean browser UI.**
 
 ---
 
@@ -26,7 +26,7 @@ Browser (HTML/CSS/JS)
        │  POST /narrate  { sql, question }
        ▼
 FastAPI backend (main.py)
-  ├── SupabaseAgent   → executes SQL, returns row dicts
+  ├── SnowflakeAgent   → executes SQL, returns row dicts
   ├── GeminiAgent      → generates narrative from rows + question
   └── ElevenLabsAgent  → converts narrative to MP3 audio
        │  { records, narrative, audio_base64 }
@@ -42,7 +42,7 @@ Browser renders table, narrative text, and plays audio
 dataNarrator/
 ├── backend/
 │   ├── main.py               # FastAPI app — /health, /narrate, /query
-│   ├── supabase_agent.py    # Supabase connection & SQL execution
+│   ├── snowflake_agent.py    # Snowflake connection & SQL execution
 │   ├── gemini_agent.py       # Google Gemini narrative generation
 │   ├── elevenlabs_agent.py   # ElevenLabs TTS synthesis
 │   ├── utils.py              # Shared helpers (env vars, table formatting)
@@ -52,7 +52,7 @@ dataNarrator/
 │   ├── style.css             # Dark-theme stylesheet
 │   └── app.js                # Fetch API calls + DOM logic
 ├── tests/
-│   ├── test_supabase.py     # Unit tests for SupabaseAgent
+│   ├── test_snowflake.py     # Unit tests for SnowflakeAgent
 │   ├── test_gemini.py        # Unit tests for GeminiAgent
 │   └── test_elevenlabs.py    # Unit tests for ElevenLabsAgent
 ├── .env.example              # Environment variable template
@@ -70,7 +70,7 @@ dataNarrator/
 |------|---------|
 | Python | ≥ 3.11 |
 | pip | latest |
-| Supabase account | any edition |
+| Snowflake account | any edition |
 | Google Gemini API key | [aistudio.google.com](https://aistudio.google.com/) |
 | ElevenLabs API key | [elevenlabs.io](https://elevenlabs.io/) |
 
@@ -85,13 +85,13 @@ cp .env.example .env
 
 | Variable | Description |
 |----------|-------------|
-| `SUPABASE_ACCOUNT` | Supabase account identifier (e.g. `xy12345.us-east-1`) |
-| `SUPABASE_USER` | Supabase username |
-| `SUPABASE_PASSWORD` | Supabase password |
-| `SUPABASE_WAREHOUSE` | Compute warehouse name |
-| `SUPABASE_DATABASE` | Default database |
-| `SUPABASE_SCHEMA` | Default schema |
-| `SUPABASE_ROLE` | Optional role override |
+| `SNOWFLAKE_ACCOUNT` | Snowflake account identifier (e.g. `xy12345.us-east-1`) |
+| `SNOWFLAKE_USER` | Snowflake username |
+| `SNOWFLAKE_PASSWORD` | Snowflake password |
+| `SNOWFLAKE_WAREHOUSE` | Compute warehouse name |
+| `SNOWFLAKE_DATABASE` | Default database |
+| `SNOWFLAKE_SCHEMA` | Default schema |
+| `SNOWFLAKE_ROLE` | Optional role override |
 | `GEMINI_API_KEY` | Google Generative AI API key |
 | `ELEVENLABS_API_KEY` | ElevenLabs API key |
 | `ELEVENLABS_VOICE_ID` | ElevenLabs voice ID to use for synthesis |
@@ -161,7 +161,7 @@ Execute SQL and return raw records only (no narrative or audio).
 ## Running Tests
 
 ```bash
-pip install pytest pytest-mock supabase-connector-python google-genai elevenlabs fastapi python-dotenv pydantic
+pip install pytest pytest-mock snowflake-connector-python google-genai elevenlabs fastapi python-dotenv pydantic
 pytest tests/ -v
 ```
 
@@ -178,7 +178,7 @@ Steps:
 
 1. Fork / push the repo to GitHub.
 2. Create a new **Blueprint** in [Render](https://dashboard.render.com/) and point it at your repo.
-3. Set the secret environment variables (API keys, Supabase credentials) in the Render dashboard.
+3. Set the secret environment variables (API keys, Snowflake credentials) in the Render dashboard.
 4. Deploy!
 
 ---
@@ -188,7 +188,7 @@ Steps:
 | Layer | Technology |
 |-------|-----------|
 | Backend API | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) |
-| Data warehouse | [Supabase](https://www.supabase.com/) |
+| Data warehouse | [Snowflake](https://www.snowflake.com/) |
 | AI narrative | [Google Gemini](https://ai.google.dev/) (`gemini-1.5-flash`) |
 | Text-to-speech | [ElevenLabs](https://elevenlabs.io/) (`eleven_multilingual_v2`) |
 | Frontend | Vanilla HTML / CSS / JavaScript |

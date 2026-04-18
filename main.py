@@ -3,7 +3,6 @@ import base64
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 import supabase_agent
@@ -67,7 +66,3 @@ async def followup(req: FollowupRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-@app.get("/")
-async def root():
-    return FileResponse("index.html")
