@@ -16,7 +16,6 @@ def test_health():
 @patch('main.elevenlabs_agent')
 def test_analyze(mock_elevenlabs, mock_gemini, mock_supabase):
     # Mock implementations
-    mock_supabase.ingest_csv.return_value = None
     mock_supabase.get_table_summary.return_value = {"summary": "test"}
 
     mock_gemini.generate_insight.return_value = {"insight": "Mocked insight", "chart_data": None}
@@ -58,3 +57,30 @@ def test_followup(mock_elevenlabs, mock_gemini):
     assert "answer" in json_response
     assert "audio_b64" in json_response
     assert json_response["answer"] == "Mocked followup answer"
+
+def test_analyze_rejects_non_csv():
+    response = client.post(
+        "/analyze",
+        files={"file": ("test.txt", io.BytesIO(b"some text"), "text/plain")}
+    )
+    assert response.status_code == 400
+    assert "Only CSV files are allowed" in response.json()["detail"]
+
+def test_analyze_rejects_oversized_file():
+    # 10MB + 1 byte
+    large_content = b"a" * (10 * 1024 * 1024 + 1)
+    response = client.post(
+        "/analyze",
+        files={"file": ("test.csv", io.BytesIO(large_content), "text/csv")}
+    )
+    assert response.status_code == 400
+    assert "File too large" in response.json()["detail"]
+
+@pytest.mark.skip(reason="Requires F-02 fix merged first")
+def test_analyze_rejects_bad_encoding():
+    bad_content = b"\xff\xfe" + b"col1,col2\nval1,val2\n"
+    response = client.post(
+        "/analyze",
+        files={"file": ("test.csv", io.BytesIO(bad_content), "text/csv")}
+    )
+    assert response.status_code == 400
