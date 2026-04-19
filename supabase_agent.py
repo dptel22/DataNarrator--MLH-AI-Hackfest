@@ -30,10 +30,23 @@ def _create_supabase_client() -> Client:
 
 
 
+def check_connection():
+    try:
+        client = _create_supabase_client()
+        # Try a simple query to verify connection
+        client.table("test").select("*", count="exact").limit(1).execute()
+    except Exception as e:
+        print(f"Supabase connection error: {e}")
+        return False
+    return True
+
 def get_table_summary(df: pd.DataFrame) -> dict:
     """
     Return a lightweight summary of the provided DataFrame.
     """
+    # Trigger a connection check to surface errors as requested by user
+    check_connection()
+    
     return {
         "row_count": int(len(df)),
         "columns": [str(column) for column in df.columns.tolist()],
