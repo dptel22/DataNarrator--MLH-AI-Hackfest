@@ -1,17 +1,21 @@
+import os
 import uuid
 import base64
 import io
+import logging
+
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import os
 
 import supabase_agent
 import gemini_agent
-import elevenlabs_agent
+import tts_agent as elevenlabs_agent
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -44,8 +48,11 @@ async def analyze(file: UploadFile = File(...)):
 
         try:
             df = pd.read_csv(io.BytesIO(contents))
-        except (pd.errors.EmptyDataError, pd.errors.ParserError) as csv_err:
-            raise HTTPException(status_code=400, detail="Invalid CSV file format.")
+        except (pd.errors.EmptyDataError, pd.errors.ParserError, UnicodeDecodeError):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid CSV file format or encoding. Please save as UTF-8.",
+            )
 
         if df.empty or len(df.columns) == 0:
             raise HTTPException(status_code=400, detail="CSV file is empty or has no columns.")
@@ -75,8 +82,9 @@ async def analyze(file: UploadFile = File(...)):
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Unhandled error in /analyze")
+        raise HTTPException(status_code=500, detail="Internal server error.")
 
 @app.post("/followup")
 async def followup(req: FollowupRequest):
@@ -97,8 +105,9 @@ async def followup(req: FollowupRequest):
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Unhandled error in /followup")
+        raise HTTPException(status_code=500, detail="Internal server error.")
 
 @app.get("/health")
 async def health():

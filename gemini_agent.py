@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 
@@ -7,9 +8,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
+else:
+    logger.warning("GEMINI_API_KEY is not set; Gemini calls will fail.")
 
 ERROR_INSIGHT = "Unable to generate insight."
 
