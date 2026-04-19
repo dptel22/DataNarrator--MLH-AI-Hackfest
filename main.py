@@ -5,7 +5,7 @@ import io
 import logging
 
 import pandas as pd
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import BackgroundTasks, FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -36,7 +36,7 @@ async def root():
     return FileResponse("index.html")
 
 @app.post("/analyze")
-async def analyze(file: UploadFile = File(...)):
+async def analyze(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
 
@@ -60,7 +60,7 @@ async def analyze(file: UploadFile = File(...)):
         session_id = "upload_" + uuid.uuid4().hex[:8]
 
         summary = supabase_agent.get_table_summary(df)
-        supabase_agent.log_upload(session_id, len(df), list(df.columns))
+        background_tasks.add_task(supabase_agent.log_upload, session_id, len(df), list(df.columns))
 
         gemini_result = gemini_agent.generate_insight(summary)
         insight_text = gemini_result.get("insight", "")

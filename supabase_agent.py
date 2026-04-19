@@ -33,7 +33,7 @@ def get_table_summary(df: pd.DataFrame) -> dict:
     }
 
 
-def log_upload(session_id, row_count, columns) -> None:
+def log_upload(session_id: str, row_count: int, columns: list[str]) -> None:
     try:
         supabase_url = os.getenv("SUPABASE_URL")
         supabase_key = os.getenv("SUPABASE_KEY")

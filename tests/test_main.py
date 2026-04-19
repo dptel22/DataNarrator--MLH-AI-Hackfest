@@ -16,8 +16,8 @@ def test_health():
 @patch('main.elevenlabs_agent')
 def test_analyze(mock_elevenlabs, mock_gemini, mock_supabase):
     # Mock implementations
-    mock_supabase.ingest_csv.return_value = None
     mock_supabase.get_table_summary.return_value = {"summary": "test"}
+    mock_supabase.log_upload.return_value = None
 
     mock_gemini.generate_insight.return_value = {"insight": "Mocked insight", "chart_data": None}
     mock_gemini.ERROR_INSIGHT = "Unable to generate insight."
@@ -41,6 +41,12 @@ def test_analyze(mock_elevenlabs, mock_gemini, mock_supabase):
     assert json_response["insight"] == "Mocked insight"
     assert json_response["audio_b64"] is not None
     assert json_response["columns"] == ["col1", "col2"]
+
+    mock_supabase.log_upload.assert_called_once()
+    call_args = mock_supabase.log_upload.call_args[0]
+    assert call_args[0].startswith("upload_")
+    assert call_args[1] == 1
+    assert call_args[2] == ["col1", "col2"]
 
 @patch('main.gemini_agent')
 @patch('main.elevenlabs_agent')
