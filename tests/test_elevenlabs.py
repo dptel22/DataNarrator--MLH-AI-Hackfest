@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import io
-import elevenlabs_agent
+import tts_agent as elevenlabs_agent
 
 
-@patch('elevenlabs_agent.gTTS', create=True)
+@patch("tts_agent.gTTS", create=True)
 def test_text_to_audio(mock_gtts_class):
     # Mock gTTS instance: write_to_fp writes fake MP3 bytes into the buffer
     mock_tts = MagicMock()

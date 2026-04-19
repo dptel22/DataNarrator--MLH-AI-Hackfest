@@ -290,7 +290,7 @@
             display: flex;
             align-items: center;
             color: var(--text-muted);
-        }
+            }
 
         #followup-result {
             margin-top: 1.5rem;
@@ -320,8 +320,8 @@
                 <path d="M36 28L36 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
                 <path d="M44 36L44 44" stroke="#4f98a3" stroke-width="4" stroke-linecap="round"/>
             </svg>
-            <h1>DataNarrator</h1>
-            <p class="subtitle">Turn any CSV into an AI voice briefing — powered by Gemini & ElevenLabs</p>
+            <h1>NarrAI</h1>
+            <p class="subtitle">Turn any CSV into an AI voice briefing — powered by Gemini 2.5 Flash + gTTS</p>
         </header>
 
         <!-- Upload Section -->
@@ -361,7 +361,7 @@
 
             <div class="tech-stack-row">
                 <span class="chip">Gemini 2.5 Flash</span>
-                <span class="chip">Google Cloud TTS</span>
+                <span class="chip">gTTS</span>
                 <span class="chip">Supabase</span>
             </div>
 
@@ -390,6 +390,9 @@
     </div>
 
     <script>
+        // Empty string keeps requests same-origin.
+        // FastAPI serves index.html at route `/`, so relative `/analyze` and `/followup` work on Render.
+        // Do NOT change this to a hardcoded URL.
         const BACKEND_URL = "";
 
         function showError(message) {
@@ -509,6 +512,14 @@
             if (selectedFile.size > 10 * 1024 * 1024) {
                 showError('File too large. Maximum size is 10MB.');
                 return;
+            }
+            // [F-09] Reset follow-up state before every new analysis
+            followupAnswer.textContent = "";
+            followupResult.classList.add('hidden');
+            followupLoading.classList.add('hidden');
+            followupInput.value = "";
+            if (typeof followupBtn !== 'undefined' && followupBtn) {
+                followupBtn.disabled = false;
             }
             startLoading();
             

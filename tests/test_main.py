@@ -76,9 +76,8 @@ def test_analyze_rejects_oversized_file():
     assert response.status_code == 400
     assert "File too large" in response.json()["detail"]
 
-@pytest.mark.skip(reason="Requires F-02 fix merged first")
 def test_analyze_rejects_bad_encoding():
-    bad_content = b"\xff\xfe" + b"col1,col2\nval1,val2\n"
+    bad_content = "col1,col2\ncafé,val2\n".encode("latin-1")
     response = client.post(
         "/analyze",
         files={"file": ("test.csv", io.BytesIO(bad_content), "text/csv")}
