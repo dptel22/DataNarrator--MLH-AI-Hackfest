@@ -390,8 +390,9 @@
     </div>
 
     <script>
-        // Empty string = same-origin. FastAPI serves this file via FileResponse("/").
-        // Do NOT change to a hardcoded URL — this breaks on Render.
+        // Empty string keeps requests same-origin.
+        // FastAPI serves index.html at route `/`, so relative `/analyze` and `/followup` work on Render.
+        // Do NOT change this to a hardcoded URL.
         const BACKEND_URL = "";
 
         function showError(message) {
@@ -517,6 +518,9 @@
             followupResult.classList.add('hidden');
             followupLoading.classList.add('hidden');
             followupInput.value = "";
+            if (typeof followupBtn !== 'undefined' && followupBtn) {
+                followupBtn.disabled = false;
+            }
             startLoading();
             
             const formData = new FormData();
